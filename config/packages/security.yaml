@@ -1,0 +1,52 @@
+security:
+    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+    providers:
+        # Proveedor que carga el usuario desde la entidad `Users` a través del campo `name`
+        app_user_provider:
+            entity:
+                class: App\Entity\Users
+                property: email
+        # used to reload user from session & other features (e.g. switch_user)
+        # used to reload user from session & other features (e.g. switch_user)
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        # Definición del firewall principal para la autenticación
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+                default_target_path: /subjects/pending
+            logout:
+                path: app_logout           # Ruta para cerrar sesión
+                target: app_login    # Puedes definir la redirección después de logout si lo deseas
+
+
+    # Control de acceso a rutas: Permitir acceso solo al login y restringir todas las demás
+    access_control:
+        # - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/subjects/pending, roles: ROLE_USER }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/redirect, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        # - { path: ^/register$, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # Restringir todas las demás rutas
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4        # Valor más bajo para bcrypt (menor coste en test)
+                time_cost: 3    # Valor más bajo para argon2
+                memory_cost: 10 # Valor más bajo para argon2

@@ -1,0 +1,5 @@
+# config/routes/security.yaml
+
+app_login:
+    path: /login
+    controller: App\Controller\SecurityController::login

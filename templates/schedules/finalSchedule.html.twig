@@ -1,0 +1,178 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Horario Final{% endblock %}
+
+{% block body %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #f9f9f9;
+            font-size: 18px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .profile-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .profile-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #6a0dad; 
+            object-fit: cover;
+        }
+
+        .schedule-container {
+            border: 2px solid #6a0dad;
+            background-color: #d8bfd8;
+            padding: 20px;
+            border-radius: 20px;
+            width: 100%;
+        }
+
+        .schedule-container h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .schedule-table th {
+            background-color: #6a0dad;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .schedule-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .schedule-table td:first-child {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .subject-block {
+            background-color: #ffa500;
+            color: #333;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 2px 0;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .time-info {
+            font-size: 0.8em;
+            margin-top: 3px;
+            color: #555;
+        }
+
+        .btn-regresar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #2196F3;
+            color: #FFFFFF;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .btn-regresar:hover {
+            background-color: #1e88e5;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #777;
+        }
+    </style>
+
+    <div class="container">
+        <!-- Botón de perfil -->
+        <button type="submit" class="profile-button">
+            <img src="{{ asset('images/user-profile.jpg') }}" alt="Perfil" class="profile-image">
+        </button>
+        
+        <div class="schedule-container">
+            <h1>Horario Final</h1>
+
+            {% if finalSchedules is defined and finalSchedules is not empty %}
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            {% for day in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'] %}
+                                <th>{{ day }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hour in 7..21 %}
+                            <tr>
+                                <td>{{ hour }}:00</td>
+                                {% for day in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'] %}
+                                    <td>
+                                        {% for schedule in finalSchedules %}
+                                            {% if schedule.day is defined and schedule.day == day %}
+                                                {% set startHour = schedule.startTime|split(':')[0]|number_format %}
+                                                {% if startHour == hour %}
+                                                    <div class="subject-block">
+                                                        {{ schedule.subject }}
+                                                        <div class="time-info">{{ schedule.startTime }} - {{ schedule.endTime }}</div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-message">No hay horarios seleccionados.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Botón de regresar -->
+    <a href="{{ path('app_schedules_available') }}" class="btn-regresar">Regresar</a>
+{% endblock %}

@@ -1,0 +1,62 @@
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+    
+    body {
+        font-family: 'Lato', sans-serif;
+        background-color: #FFFFFF;
+        font-size: 20px; /* letra más grande */
+        overflow-y: hidden;
+    }
+    
+    table {
+        border-collapse: separate;
+        border-spacing: 10px; /* más espacio entre filas */
+    }
+    
+    th, td {
+        padding: 10px; /* más espacio entre celdas */
+    }
+    
+    th {
+        font-weight: bold;
+        padding-bottom: 40px; /* más espacio entre título y tabla */
+    }
+    
+    td {
+        text-align: center; /* checkboxes centrados */
+    }
+    
+    input[type="checkbox"] {
+        margin: 0 auto; /* checkboxes centrados */
+    }
+</style>
+
+<table>
+    <thead>
+        <tr>
+            <th colspan="4" style="text-align: center;">Materias Pendientes</th>
+        </tr>
+        <tr>
+            <th>Nombre</th>
+            <th>Créditos</th>
+            <th>Semestre</th>
+            <th>Seleccionar materia</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for subject in subjects %}
+            <tr>
+                <td>{{ subject.name }}</td>
+                <td>{{ subject.credits }}</td>
+                <td>{{ subject.semester }}</td>
+                <td>
+                    <input type="checkbox" id="select-{{ subject.id }}" name="selected_subjects[]" style="margin: 0 auto;">
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">No tienes materias pendientes.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

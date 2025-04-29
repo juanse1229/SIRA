@@ -1,0 +1,89 @@
+login:
+    path: /login
+    controller: App\Controller\SecurityController::login  # Controlador que muestra el formulario
+
+app_logout:
+    path: /logout
+    methods: GET
+    controller: App\Controller\SecurityController::logout  # Controlador para cerrar la sesión
+
+app_register:
+    path: /register
+    controller: App\Controller\RegistrationController::register  # Controlador para el registro
+    methods: [GET, POST]
+
+
+app_subjects_pending:
+    path: /subjects/pending
+    controller: App\Controller\SubjectsController::pending
+
+app_schedules_index:
+    path: /schedules
+    controller: App\Controller\SchedulesController::index
+    methods: GET
+
+app_schedules_available:
+    path: /schedules/available
+    controller: App\Controller\SchedulesController::available
+    methods: GET
+
+app_schedules_new:
+    path: /schedules/new
+    controller: App\Controller\SchedulesController::new
+    methods: [GET, POST]
+
+app_schedules_show:
+    path: /schedules/{id}
+    controller: App\Controller\SchedulesController::show
+    methods: GET
+
+app_schedules_edit:
+    path: /schedules/{id}/edit
+    controller: App\Controller\SchedulesController::edit
+    methods: [GET, POST]
+
+app_schedules_delete:
+    path: /schedules/{id}
+    controller: App\Controller\SchedulesController::delete
+    methods: POST
+
+
+app_subjects_continue:
+    path: /subjects/continue
+    controller: App\Controller\SubjectsController::continue
+    methods: POST
+
+app_subjects_new:
+    path: /subjects/new
+    controller: App\Controller\SubjectsController::new
+    # methods: [GET, POST]
+
+app_subjects_show:
+    path: /subjects/{id}
+    controller: App\Controller\SubjectsController::show
+    methods: GET
+
+app_subjects_edit:
+    path: /subjects/{id}/edit
+    controller: App\Controller\SubjectsController::edit
+    methods: [GET, POST]
+
+app_subjects_delete:
+    path: /subjects/{id}
+    controller: App\Controller\SubjectsController::delete
+    methods: POST
+
+app_register_redirect:
+    path: /redirect
+    controller: App\Controller\SecurityController::redirectToRegister
+
+app_schedules_validate:
+    path: /validate
+    controller: App\Controller\SchedulesController::validate
+
+app_schedules_final:
+    path: /final-schedule
+    controller: App\Controller\SchedulesController::finalSchedule
+    methods: GET
+
+

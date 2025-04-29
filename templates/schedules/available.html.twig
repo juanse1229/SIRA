@@ -1,0 +1,545 @@
+{% block body %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #f9f9f9;
+            font-size: 18px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 30px;
+        }
+
+        .profile-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .profile-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #6a0dad; 
+            object-fit: cover;
+        }
+
+        .available-schedules-container {
+            flex: 2;                               
+            border: 2px solid #6a0dad;           
+            background-color: #d8bfd8;           
+            padding: 20px;                      
+            max-height: 80vh;
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            border-radius: 20px;
+        }
+
+        .available-schedules {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px;
+            max-height: 70vh; 
+            overflow-x: auto; 
+            overflow-y: auto; 
+        }
+
+        .subject-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 250px;
+        }
+
+        .subject-column h3 {
+            margin: 0;
+            font-size: 1em;
+            color: #333;
+            height: 80px;
+            display: flex;
+            text-align: center;
+            justify-content: center;
+            align-items: center; 
+        }
+
+        .schedule-card {
+            background-color: #ffffff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin: 5px;
+            cursor: grab;
+            width: 90%;
+            height: 180px;
+            display: flex;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border-radius: 10px;
+        }
+
+        .schedule-card.disabled {
+            background-color: #f5f5f5;
+            color: #a0a0a0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .schedule-card.selected {
+            position: relative;
+            padding-right: 30px;
+            background-color: #ffffff;  
+            border: 1px solid #6a0dad;  
+            color: #000000;             
+            cursor: default;
+            opacity: 1;                
+        }
+
+        .selected-schedules {
+            flex: 1;
+            border: 2px solid #ffa500;
+            background-color: #ffdead;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 10px;
+        }
+
+		/* Formulario principal */
+        #selectedSchedulesForm {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-limpiar {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            background-color: #FF6347;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-limpiar:hover {
+            background-color: #e5533d;
+        }
+
+        .btn-continuar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-continuar:hover {
+            background-color: #3e8e41;
+        }
+
+        .btn-regresar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #2196F3;
+            color: #FFFFFF;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-regresar:hover {
+            background-color: #1e88e5;
+        }
+
+        /* Estilos del modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .close {
+            color: red;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: darkred;
+        }
+    </style>
+
+    <!-- Modal de Errores -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    {# Agrupar los horarios por materia y grupo #}
+    {% set groupedSchedules = {} %}
+
+    {% for schedule in schedules %}
+        {% set key = schedule.name ~ '-' ~ schedule.groupNumber %}
+
+        {% if groupedSchedules[schedule.name] is not defined %}
+            {% set groupedSchedules = groupedSchedules|merge({ (schedule.name): [] }) %}
+        {% endif %}
+
+        {% set groupExists = false %}
+        {% set updatedGroups = [] %}
+
+        {# Recorrer los grupos ya almacenados para actualizar los datos #}
+        {% for group in groupedSchedules[schedule.name] %}
+            {% if group['group'] == schedule.groupNumber %}
+                {% set groupExists = true %}
+                {% set updatedGroup = group|merge({ 
+                    'days': group['days']|merge([{ 'id': schedule.id, 'day': schedule.day, 'startTime': schedule.startTime, 'endTime': schedule.endTime }])
+                }) %}
+                {% set updatedGroups = updatedGroups|merge([updatedGroup]) %}
+            {% else %}
+                {% set updatedGroups = updatedGroups|merge([group]) %}
+            {% endif %}
+        {% endfor %}
+
+        {# Si el grupo no existe, lo agregamos #}
+        {% if not groupExists %}
+            {% set updatedGroups = updatedGroups|merge([{ 
+                'group': schedule.groupNumber, 
+                'days': [{ 'id': schedule.id, 'day': schedule.day, 'startTime': schedule.startTime, 'endTime': schedule.endTime }] 
+            }]) %}
+        {% endif %}
+
+        {# Reasignar la lista de grupos actualizada #}
+        {% set groupedSchedules = groupedSchedules|merge({ (schedule.name): updatedGroups }) %}
+    {% endfor %}
+
+	<div class="container">
+        <!-- Botón de perfil -->
+        {# <form id="profileForm" action="{{ path('app_user_profile') }}" method="get"> #}
+            <button type="submit" class="profile-button">
+                <img src="{{ asset('images/user-profile.jpg') }}" alt="Perfil" class="profile-image">
+            </button>
+        {# </form> #}
+
+		<form id="selectedSchedulesForm" action="{{ path('app_schedules_validate') }}" method="post">
+			<!-- Contenedor de horarios disponibles -->
+			<div class="available-schedules-container">
+				<div>
+					<h2>Horarios Disponibles</h2>
+				</div>
+                <div class="available-schedules">
+                    {% for subjectName, groups in groupedSchedules %}
+                        <div class="subject-column">
+                            <h3>{{ subjectName }}</h3>
+                            {% for group in groups %}
+                                <div class="schedule-card" 
+                                    draggable="true" 
+                                    data-id="{{ group.days[0].id }}" 
+                                    data-name="{{ subjectName }}" 
+                                    data-group="{{ group.group }}">
+                                    <p><strong>Grupo:</strong> {{ group.group }}</p>
+                                    <p><strong>Días y Horarios:</strong></p>
+                                    <ul>
+                                        {% for dayInfo in group.days %}
+                                            <li data-schedule-id="{{ dayInfo.id }}">{{ dayInfo.day }}: {{ dayInfo.startTime|date('H:i') }} - {{ dayInfo.endTime|date('H:i') }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+			</div>
+
+			<!-- Contenedor de horarios seleccionados -->
+			<div class="selected-schedules" id="selectedSchedules">
+				<h2>Horarios Seleccionados</h2>
+			</div>
+
+			<!-- Inputs ocultos -->
+			<div id="hiddenInputsContainer"></div>
+
+			<!-- Botones -->
+			<div class="button-container">
+				<button type="button" class="btn-limpiar">Limpiar Selección</button>
+				<button type="submit" class="btn-continuar">Continuar</button>
+				<a href="{{ path('app_subjects_pending') }}" class="btn-regresar">Regresar</a>
+			</div>
+		</form>
+	</div>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("errorModal");
+    const modalMessage = document.getElementById("modalMessage");
+    const closeModal = document.querySelector(".close");
+    const continueButton = document.querySelector(".btn-continuar");
+    const clearButton = document.querySelector(".btn-limpiar");
+    const selectedSchedules = document.getElementById("selectedSchedules");
+    const hiddenInputsContainer = document.getElementById("hiddenInputsContainer");
+    const allSchedules = document.querySelectorAll(".schedule-card");
+
+    let selectedTimes = {};
+
+    modal.style.display = "none";
+
+    function showModal(message) {
+        console.log("[🔴 ERROR] Mostrando modal:", message);
+        modalMessage.innerHTML = message;
+        modal.style.display = "flex";
+    }
+
+    closeModal.addEventListener("click", () => modal.style.display = "none");
+    window.addEventListener("click", event => {
+        if (event.target === modal) modal.style.display = "none";
+    });
+
+    function dragStart(event) {
+        if (event.target.getAttribute("draggable") === "false") return;
+        event.dataTransfer.setData("text/plain", event.target.getAttribute("data-id"));
+        event.target.style.opacity = "0.5";
+    }
+
+    function dragEnd(event) {
+        event.target.style.opacity = "1";
+    }
+
+    function dragOver(event) {
+        event.preventDefault();
+    }
+
+    function dropToSelected(event) {
+        event.preventDefault();
+        const id = event.dataTransfer.getData("text/plain");
+        const card = document.querySelector(`.schedule-card[data-id="${id}"]`);
+        const subjectName = card.dataset.name;
+        const selectedGroup = card.dataset.group;
+        const scheduleDays = extractScheduleData(card);
+
+        console.log(`[🟢 CHECK] Intentando agregar: ${subjectName}`);
+        console.log("Horarios actuales en selectedTimes:", selectedTimes);
+
+        for (let { day, start, end } of scheduleDays) {
+            if (selectedTimes[day]) {
+                for (let { subject, existingStart, existingEnd } of selectedTimes[day]) {
+                    console.log(`🔍 Comparando: ${subjectName} (${day} ${formatTime(start)} - ${formatTime(end)})`);
+                    console.log(`➡️ Contra: ${subject} (${day} ${formatTime(existingStart)} - ${formatTime(existingEnd)})`);
+
+                    if (hasTimeOverlap(start, end, existingStart, existingEnd)) {
+                        console.warn(`[❌ CONFLICTO] ${subjectName} choca con ${subject} en ${day}`);
+                        showModal(`⚠️ <strong>Conflicto de horario detectado:</strong><br> 
+                        <strong>${subjectName}</strong> (${day} ${formatTime(start)} - ${formatTime(end)})<br>
+                        colisiona con <strong>${subject}</strong> (${day} ${formatTime(existingStart)} - ${formatTime(existingEnd)})<br>
+                        ❌ No puedes agregar esta materia.`);
+                        return;
+                    }
+                }
+            }
+        }
+
+        console.log(`[✅ AGREGADO] ${subjectName} no tiene conflictos.`);
+        addScheduleToDictionary(scheduleDays, subjectName);
+
+        const clonedCard = card.cloneNode(true);
+        clonedCard.setAttribute("draggable", "false");
+        clonedCard.classList.add("selected");
+        addRemoveButton(clonedCard, id, subjectName, scheduleDays);
+        selectedSchedules.appendChild(clonedCard);
+
+        disableCardInAvailable(card);
+        disableOtherSchedules(subjectName, selectedGroup);
+        addHiddenInput(id);
+    }
+
+    function extractScheduleData(card) {
+        return Array.from(card.querySelectorAll("li")).map(li => {
+            let text = li.textContent.trim();  // Elimina espacios extra
+            console.log(`[🟢 DEBUG] Procesando horario: "${text}"`); 
+
+            const match = text.match(/^(.+?):\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/);
+            if (!match) {
+                console.warn(`[❌ ERROR] Formato incorrecto en: "${text}"`);
+                return { day: "ERROR", start: NaN, end: NaN };
+            }
+
+            const [, day, start, end] = match;
+            return { day: day.trim(), start: parseTime(start), end: parseTime(end) };
+        });
+    }
+
+    function hasTimeOverlap(start1, end1, start2, end2) {
+        const overlap = (start1 < end2 && end1 > start2);
+        console.log(`[⏰ VALIDANDO SOLAPE] ${start1}-${end1} vs ${start2}-${end2}: ${overlap ? "❌ CONFLICTO" : "✅ NO CONFLICTO"}`);
+        return overlap;
+    }
+
+    function parseTime(timeString) {
+        if (!timeString) {
+            console.warn(`[❌ ERROR] Tiempo vacío recibido en parseTime()`);
+            return NaN;
+        }
+
+        const [hours, minutes] = timeString.split(":").map(Number);
+        if (isNaN(hours) || isNaN(minutes)) {
+            console.warn(`[❌ ERROR] Error parseando tiempo: "${timeString}"`);
+            return NaN;
+        }
+
+        const totalMinutes = hours * 60 + minutes;
+        console.log(`[⏰ PARSE TIME] ${timeString} → ${totalMinutes} minutos`);
+        return totalMinutes;
+    }
+
+    function formatTime(minutes) {
+        let h = Math.floor(minutes / 60);
+        let m = minutes % 60;
+        return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+    }
+
+    function addScheduleToDictionary(scheduleDays, subjectName) {
+        for (let { day, start, end } of scheduleDays) {
+            if (!selectedTimes[day]) {
+                selectedTimes[day] = [];
+            }
+            selectedTimes[day].push({ subject: subjectName, existingStart: start, existingEnd: end });
+        }
+    }
+
+    function removeScheduleFromDictionary(scheduleDays, subjectName) {
+        for (let { day, start, end } of scheduleDays) {
+            if (selectedTimes[day]) {
+                selectedTimes[day] = selectedTimes[day].filter(entry => 
+                    entry.subject !== subjectName || entry.existingStart !== start || entry.existingEnd !== end
+                );
+                if (selectedTimes[day].length === 0) delete selectedTimes[day];
+            }
+        }
+    }
+
+    function disableCardInAvailable(card) {
+        card.setAttribute("draggable", "false");
+        card.classList.add("disabled");
+    }
+
+    function disableOtherSchedules(subjectName, selectedGroup) {
+        document.querySelectorAll(`.schedule-card[data-name="${subjectName}"]`).forEach(el => {
+            if (el.dataset.group !== selectedGroup) {
+                el.classList.add("disabled");
+                el.setAttribute("draggable", "false");
+            }
+        });
+    }
+
+    function addHiddenInput(id) {
+        // Extract all schedule IDs from the card
+        const card = document.querySelector(`.schedule-card[data-id="${id}"]`);
+        const scheduleItems = card.querySelectorAll('li[data-schedule-id]');
+        
+        // Add each schedule ID as a separate input
+        scheduleItems.forEach(item => {
+            const scheduleId = item.getAttribute('data-schedule-id');
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "schedules[]";
+            input.value = scheduleId;
+            hiddenInputsContainer.appendChild(input);
+        });
+    }
+
+    function addRemoveButton(card, id, subjectName, scheduleDays) {
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "❌";
+        removeBtn.classList.add("remove-btn");
+        removeBtn.style.position = "absolute";
+        removeBtn.style.right = "-25px";
+        removeBtn.style.top = "50%";
+        removeBtn.style.transform = "translateY(-50%)";
+        removeBtn.addEventListener("click", () => removeSelectedSchedule(card, id, subjectName, scheduleDays));
+        card.style.position = "relative";
+        card.appendChild(removeBtn);
+    }
+
+    function removeSelectedSchedule(card, id, subjectName, scheduleDays) {
+        card.remove();
+        hiddenInputsContainer.querySelector(`input[value="${id}"]`).remove();
+        removeScheduleFromDictionary(scheduleDays, subjectName);
+        enableCard(subjectName);
+    }
+
+    function enableCard(subjectName) {
+        document.querySelectorAll(`.schedule-card[data-name="${subjectName}"]`).forEach(el => {
+            el.setAttribute("draggable", "true");
+            el.classList.remove("disabled");
+        });
+    }
+
+    clearButton.addEventListener("click", () => {
+        selectedSchedules.innerHTML = "<h2>Horarios Seleccionados</h2>";
+        hiddenInputsContainer.innerHTML = "";
+        selectedTimes = {};
+        enableAllCards();
+    });
+
+    function enableAllCards() {
+        document.querySelectorAll(".schedule-card").forEach(card => {
+            card.setAttribute("draggable", "true");
+            card.classList.remove("disabled");
+        });
+    }
+
+    allSchedules.forEach(card => {
+        card.addEventListener("dragstart", dragStart);
+        card.addEventListener("dragend", dragEnd);
+    });
+
+    selectedSchedules.addEventListener("dragover", dragOver);
+    selectedSchedules.addEventListener("drop", dropToSelected);
+});
+    </script>
+{% endblock %}

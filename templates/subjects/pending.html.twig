@@ -1,0 +1,389 @@
+{% block body %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #FFFFFF;
+            font-size: 18px;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 30px;
+        }
+
+        .profile-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .profile-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #6a0dad; 
+            object-fit: cover;
+        }
+
+        /* Estilo de las tarjetas de materias */
+        .subject-card {
+            background-color: #ffffff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin: 5px;
+            cursor: grab;
+            width: 90%;
+            height: 140px;
+            display: flex;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border-radius: 10px;
+        }
+
+        /* Materias deshabilitadas */
+        .subject-card.disabled {
+            background-color: #f5f5f5;
+            border: 1px solid #ccc;
+            color: #a0a0a0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Materias seleccionadas en "Materias Seleccionadas" */
+        .subject-card.selected {
+            background-color: #ffffff;
+            border: 1px solid #6a0dad;
+            color: #000000;
+            cursor: default;
+            opacity: 1;
+        }
+
+        /* Contenedor general */
+        .pending-subjects-container {
+            flex: 2;                               
+            border: 2px solid #6a0dad;           
+            background-color: #d8bfd8;           
+            padding: 20px;
+            overflow: auto;                        
+            max-height: 80vh;
+            display: grid;
+            grid-gap: 10px;
+            border-radius: 20px;
+        }
+
+        /* Contenedor de los semestres */
+        .pending-subjects {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(8, minmax(250px, 1fr));
+            grid-gap: 10px;
+            overflow: auto;
+            max-height: 80vh;
+            padding: 10px;
+        }
+
+        /* Títulos de los semestres */
+        .semester-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .semester-column h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        /* Cuadro de materias seleccionadas */
+        .selected-subjects {
+            flex: 1; 
+            border: 2px solid #ffa500; 
+            background-color: #ffdead; 
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 80vh;
+            border-radius: 20px;
+        }
+
+        /* Formulario principal */
+        #selectedSubjectsForm {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+        }
+
+        /* Botón limpiar selección */
+        .btn-limpiar {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            background-color: #FF6347; 
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-limpiar:hover {
+            background-color: #e5533d;
+        }
+
+        /* Botón continuar */
+        .btn-continuar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-continuar:hover {
+            background-color: #3e8e41;
+        }
+
+        /* Estilos del modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .close {
+            color: red;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: darkred;
+        }
+    </style>
+
+    <!-- Modal de error -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Botón de perfil -->
+        {# <form id="profileForm" action="{{ path('app_user_profile') }}" method="get"> #}
+            <button type="submit" class="profile-button">
+                <img src="{{ asset('images/user-profile.jpg') }}" alt="Perfil" class="profile-image">
+            </button>
+        {# </form> #}
+
+        <form id="selectedSubjectsForm" action="{{ path('app_subjects_continue') }}" method="post">
+            <!-- Contenedor para los inputs ocultos de las materias seleccionadas -->
+            <div id="selectedSubjectsContainer"></div>
+            
+            <!-- Cuadro de materias pendientes -->
+            <div class="pending-subjects-container">
+                <div>
+                    <h2>Materias Pendientes</h2>
+                </div>
+                <div class="pending-subjects" id="pendingSubjects">
+                    {% for semester in 1..8 %}
+                        <div class="semester-column">
+                            <h3>Semestre {{ semester }}</h3>
+                            {% for subject in subjects | filter(subject => subject.semester == semester) %}
+                                <div class="subject-card" draggable="true" data-id="{{ subject.id }}">
+                                    <p>{{ subject.name }}</p>
+                                    <p>Créditos: {{ subject.credits }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Cuadro de materias seleccionadas -->
+            <div class="selected-subjects" id="selectedSubjects">
+                <h2>Materias Seleccionadas</h2>
+            </div>
+
+            <!-- Botones -->
+            <button type="button" class="btn-limpiar">Limpiar Selección</button>
+            <button type="submit" class="btn-continuar">Continuar</button>
+        </form>
+    </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("errorModal");
+    const modalMessage = document.getElementById("modalMessage");
+    const closeModal = document.querySelector(".close");
+    const continueButton = document.querySelector(".btn-continuar");
+    const clearButton = document.querySelector(".btn-limpiar");
+    const selectedSubjects = document.getElementById('selectedSubjects');
+    const selectedSubjectsContainer = document.getElementById('selectedSubjectsContainer');
+    const allSubjects = document.querySelectorAll('.subject-card');
+
+    // Asegurar que el pop-up esté oculto al inicio
+    modal.style.display = "none";
+
+    function showModal(message) {
+        modalMessage.textContent = message;
+        modal.style.display = "flex";
+    }
+
+    closeModal.addEventListener("click", () => modal.style.display = "none");
+    window.addEventListener("click", event => {
+        if (event.target === modal) modal.style.display = "none";
+    });
+
+    function dragStart(event) {
+        if (event.target.getAttribute('draggable') === 'false') return;
+        event.dataTransfer.setData('text/plain', event.target.getAttribute('data-id'));
+        event.target.style.opacity = '0.5';
+    }
+
+    function dragEnd(event) {
+        event.target.style.opacity = '1';
+    }
+
+    function dragOver(event) {
+        event.preventDefault();
+    }
+
+    function validateSelection(subjectName) {
+        if (selectedSubjects.querySelector(`[data-name="${subjectName}"]`)) {
+            showModal("No puedes seleccionar una materia ya matriculada.");
+            return false;
+        }
+        return true;
+    }
+
+    function dropToSelected(event) {
+        event.preventDefault();
+        const id = event.dataTransfer.getData('text/plain');
+        const card = document.querySelector(`.subject-card[data-id="${id}"]`);
+        const subjectName = card.dataset.name;
+
+        if (!validateSelection(subjectName)) return;
+
+        const clonedCard = card.cloneNode(true);
+        clonedCard.setAttribute('draggable', 'false');
+        clonedCard.classList.add('selected');
+
+        addRemoveButton(clonedCard, id, subjectName);
+
+        selectedSubjects.appendChild(clonedCard);
+        disableCardInPending(card);
+        addHiddenInput(id);
+    }
+
+    function disableCardInPending(card) {
+        card.setAttribute('draggable', 'false');
+        card.classList.add('disabled');
+    }
+
+    function addHiddenInput(id) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'subjects[]';
+        input.value = id;
+        selectedSubjectsContainer.appendChild(input);
+    }
+
+    function enableAllCards() {
+        document.querySelectorAll('.subject-card').forEach(card => {
+            card.setAttribute('draggable', 'true');
+            card.classList.remove('disabled');
+        });
+    }
+
+    function addRemoveButton(card, id, subjectName) {
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '❌';
+        removeBtn.classList.add('remove-btn');
+        removeBtn.classList.add("remove-btn");
+        removeBtn.style.position = "absolute";
+        removeBtn.style.right = "-25px";
+        removeBtn.style.top = "50%";
+        removeBtn.style.transform = "translateY(-50%)";
+        removeBtn.addEventListener('click', () => removeSelectedSubject(card, id, subjectName));
+        card.style.position = "relative"; 
+        card.appendChild(removeBtn);
+    }
+
+    function removeSelectedSubject(card, id, subjectName) {
+        card.remove();
+        document.querySelector(`input[value="${id}"]`).remove();
+
+        // Reactivar la materia en la lista de materias pendientes
+        const pendingCard = document.querySelector(`.subject-card[data-id="${id}"]`);
+        if (pendingCard) {
+            pendingCard.setAttribute('draggable', 'true');
+            pendingCard.classList.remove('disabled');
+        }
+    }
+
+    clearButton.addEventListener('click', () => {
+        selectedSubjects.innerHTML = '';
+        selectedSubjectsContainer.innerHTML = '';
+        enableAllCards();
+    });
+
+    continueButton.addEventListener("click", (event) => {
+        if (selectedSubjects.children.length === 0) {
+            event.preventDefault();
+            showModal("Debes seleccionar al menos una materia para continuar.");
+        }
+    });
+
+    allSubjects.forEach(card => {
+        card.addEventListener('dragstart', dragStart);
+        card.addEventListener('dragend', dragEnd);
+    });
+
+    selectedSubjects.addEventListener('dragover', dragOver);
+    selectedSubjects.addEventListener('drop', dropToSelected);
+});
+</script>
+{% endblock %}

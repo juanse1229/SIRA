@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Schedules index{% endblock %}
+
+{% block body %}
+    <h1>Schedules index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>GroupNumber</th>
+                <th>StartTime</th>
+                <th>EndTime</th>
+                <th>CreatedAt</th>
+                <th>UpdatedAt</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for schedule in schedules %}
+            <tr>
+                <td>{{ schedule.id }}</td>
+                <td>{{ schedule.groupNumber }}</td>
+                <td>{{ schedule.startTime ? schedule.startTime|date('H:i:s') : '' }}</td>
+                <td>{{ schedule.endTime ? schedule.endTime|date('H:i:s') : '' }}</td>
+                <td>{{ schedule.createdAt ? schedule.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ schedule.updatedAt ? schedule.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_schedules_show', {'id': schedule.id}) }}">show</a>
+                    <a href="{{ path('app_schedules_edit', {'id': schedule.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="7">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {# <a href="{{ path('app_schedules_new') }}">Create new</a> #}
+{% endblock %}

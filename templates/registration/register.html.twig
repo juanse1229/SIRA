@@ -1,0 +1,142 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Register{% endblock %}
+
+{% block body %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .register-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .register-container h1 {
+            margin-bottom: 20px;
+            font-size: 28px;
+            color: #333333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+        }
+
+        .btn-primary:hover {
+            background-color: #3e8e41;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .dropdown {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .checkbox {
+            margin-bottom: 15px;
+        }
+    </style>
+
+    <div class="register-container">
+        <h1>Register</h1>
+
+        {% for flash_error in app.flashes('verify_email_error') %}
+            <div class="alert alert-danger" role="alert">{{ flash_error }}</div>
+        {% endfor %}
+
+        {{ form_start(registrationForm) }}
+
+        <div class="form-group">
+            {{ form_label(registrationForm.name, 'First Name') }}
+            {{ form_widget(registrationForm.name, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(registrationForm.name) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(registrationForm.lastName, 'Last Name') }}
+            {{ form_widget(registrationForm.lastName, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(registrationForm.lastName) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(registrationForm.email, 'Email') }}
+            {{ form_widget(registrationForm.email, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(registrationForm.email) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(registrationForm.plainPassword, 'Password') }}
+            {{ form_widget(registrationForm.plainPassword, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(registrationForm.plainPassword) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(registrationForm.career, 'Career') }}
+            {{ form_widget(registrationForm.career, {'attr': {'class': 'dropdown'}}) }}
+            {{ form_errors(registrationForm.career) }}
+        </div>
+
+        <div class="checkbox">
+            {{ form_widget(registrationForm.agreeTerms) }}
+            {{ form_label(registrationForm.agreeTerms) }}
+            {{ form_errors(registrationForm.agreeTerms) }}
+        </div>
+
+        <button type="submit" class="btn-primary">Register</button>
+
+        {{ form_end(registrationForm) }}
+    </div>
+{% endblock %}

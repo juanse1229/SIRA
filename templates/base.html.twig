@@ -1,0 +1,41 @@
+<!-- templates/subjects/index.html.twig -->
+
+
+{% block body %}
+    <h1>Materias Pendientes</h1>
+
+    <!-- Mostrar mensajes flash de error -->
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    <form action="{{ path('app_subjects_continue') }}" method="post">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Créditos</th>
+                    <th>Semestre</th>
+                    <th>Seleccionar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subject in subjects %}
+                    <tr>
+                        <td>{{ subject.name }}</td>
+                        <td>{{ subject.credits }}</td>
+                        <td>{{ subject.semester }}</td>
+                        <td>
+                            <input type="checkbox" name="subjects[]" value="{{ subject.id }}">
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4">No tienes materias pendientes.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit">Continuar</button>
+    </form>
+{% endblock %}
